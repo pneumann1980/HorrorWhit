@@ -484,39 +484,28 @@ body {
    TOUCH CONTROLS
    ═══════════════════════════════════════════════════════════ */
 
-/* Disable default tap highlight globally for touch */
 * { -webkit-tap-highlight-color: transparent; }
 
-/* Touch controls container: covers full screen, pointer-events:none
-   so the canvas below still gets look-touch events */
 #touchControls {
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 25;
-  /* Landscape hint via orientation media */
 }
 
-/* ── Virtual Joystick ──────────────────────────────────────── */
+/* ── Floating Joystick (JS positions it to finger) ─────────── */
 
-#joystickZone {
-  position: absolute;
-  bottom: 28px;
-  left: 24px;
-  width: 140px;
-  height: 140px;
-  pointer-events: all;
-  touch-action: none;
-}
-
-#joystickBase {
-  position: absolute;
-  inset: 0;
+#joystickFloating {
+  position: fixed;
+  opacity: 0;
+  pointer-events: none;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.06);
   border: 2px solid rgba(255, 255, 255, 0.18);
   backdrop-filter: blur(2px);
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+  transition: opacity 0.1s;
+  z-index: 30;
 }
 
 #joystickKnob {
@@ -536,27 +525,8 @@ body {
   transition: transform 0.04s ease-out;
 }
 
-/* ── Action Buttons (bottom right) ────────────────────────── */
+/* ── Base touch button ─────────────────────────────────────── */
 
-#actionButtons {
-  position: absolute;
-  bottom: 24px;
-  right: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 10px;
-  pointer-events: all;
-  touch-action: none;
-}
-
-#actionRow1 {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-/* Base touch button style */
 .touch-btn {
   display: flex;
   align-items: center;
@@ -569,39 +539,42 @@ body {
   font-family: 'Share Tech Mono', monospace;
   cursor: pointer;
   user-select: none;
+  -webkit-user-select: none;
   touch-action: manipulation;
   transition: background 0.12s, border-color 0.12s, transform 0.08s;
   box-shadow: 0 2px 12px rgba(0,0,0,0.5);
-  -webkit-user-select: none;
 }
 
-/* Flashlight button */
+/* Flashlight – fixed bottom-left, reachable by left thumb */
 #btnFlash {
-  width: 54px;
-  height: 54px;
-  font-size: 22px;
-  border-color: rgba(240, 192, 64, 0.35);
-}
-
-/* Sprint button */
-.sprint-btn {
-  width: 54px;
-  height: 54px;
+  position: fixed;
+  bottom: 52px;
+  left: 24px;
+  width: 58px;
+  height: 58px;
   font-size: 24px;
-  border-color: rgba(100, 180, 255, 0.35);
-  color: rgba(140, 200, 255, 0.8);
+  border-color: rgba(240, 192, 64, 0.4);
+  pointer-events: all;
+  touch-action: manipulation;
+  z-index: 30;
 }
 
-/* Interact button (primary, large) */
-.interact-btn {
-  width: 78px;
-  height: 78px;
-  font-size: 32px;
+/* Interact – fixed bottom-right, reachable by right thumb */
+#btnInteract {
+  position: fixed;
+  bottom: 44px;
+  right: 32px;
+  width: 82px;
+  height: 82px;
+  font-size: 34px;
   font-weight: bold;
   border-color: rgba(200, 48, 48, 0.55);
   background: rgba(60, 0, 0, 0.65);
   color: rgba(255, 140, 140, 0.9);
   box-shadow: 0 0 16px rgba(200, 48, 48, 0.25), 0 2px 12px rgba(0,0,0,0.6);
+  pointer-events: all;
+  touch-action: manipulation;
+  z-index: 30;
 }
 
 /* Active / pressed states */
@@ -612,17 +585,11 @@ body {
   transform: scale(0.92);
 }
 
-.interact-btn:active,
-.interact-btn.pressed {
+#btnInteract:active,
+#btnInteract.pressed {
   background: rgba(160, 20, 20, 0.7);
   border-color: rgba(255, 80, 80, 0.8);
   transform: scale(0.92);
-}
-
-.sprint-btn.pressed {
-  background: rgba(20, 60, 120, 0.6);
-  border-color: rgba(100, 180, 255, 0.8);
-  transform: scale(0.96);
 }
 
 /* ── Pause button (top right) ─────────────────────────────── */

@@ -56,25 +56,18 @@
   <!-- ── Touch Controls (shown only on touch devices) ── -->
   <div id="touchControls" class="hidden">
 
-    <!-- Virtual Joystick (bottom left) -->
-    <div id="joystickZone">
-      <div id="joystickBase">
-        <div id="joystickKnob"></div>
-      </div>
+    <!-- Floating joystick: JS moves this to wherever the left thumb lands -->
+    <div id="joystickFloating">
+      <div id="joystickKnob"></div>
     </div>
 
-    <!-- Action Buttons (bottom right) -->
-    <div id="actionButtons">
-      <!-- Top row: secondary actions -->
-      <div id="actionRow1">
-        <button id="btnFlash"  class="touch-btn" aria-label="Taschenlampe">⚡</button>
-        <button id="btnSprint" class="touch-btn sprint-btn" aria-label="Rennen">⇡</button>
-      </div>
-      <!-- Bottom: primary interact -->
-      <button id="btnInteract" class="touch-btn interact-btn" aria-label="Interagieren">E</button>
-    </div>
+    <!-- Flashlight button – fixed bottom-left, left-thumb accessible -->
+    <button id="btnFlash" class="touch-btn" aria-label="Taschenlampe">⚡</button>
 
-    <!-- Pause button (top right) -->
+    <!-- Interact button – fixed bottom-right, right-thumb accessible -->
+    <button id="btnInteract" class="touch-btn interact-btn" aria-label="Interagieren">E</button>
+
+    <!-- Pause button – top right -->
     <button id="btnPause" class="touch-pause-btn" aria-label="Pause">II</button>
 
   </div>

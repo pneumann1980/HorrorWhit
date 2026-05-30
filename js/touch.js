@@ -1,41 +1,42 @@
 'use strict';
 
-// Touch control system for mobile / tablet
-// Provides virtual joystick + action buttons + look-drag
-// Injects input into a Player instance and directly into player's yaw/pitch
+// Touch controls for mobile / tablet
+// Design principles:
+//   · Left thumb  → floating joystick (spawns where you touch left half)
+//   · Left thumb  → flashlight button above joystick zone
+//   · Right thumb → drag = look camera
+//   · Right thumb → TAP (< 10 px movement, < 250 ms) = interact (E)
+//   · Auto-sprint when joystick pushed ≥ 70 % — no sprint button needed
+//   · Pause button top-right, small
 class TouchControls {
   constructor() {
-    this.player = null;       // Set in init()
+    this.player = null;
     this.active = false;
 
-    // Joystick state
-    this._joyTouchId  = null;
-    this._joyCenter   = { x: 0, y: 0 };
-    this._joyDelta    = { x: 0, y: 0 }; // normalised -1..1
-    this._joyMaxR     = 42;             // max knob displacement px
+    // Joystick
+    this._joyId     = null;   // touch identifier
+    this._joyOrigin = { x: 0, y: 0 };
+    this._joyDelta  = { x: 0, y: 0 }; // normalised –1..1
+    this._joyMaxR   = 52;              // max knob displacement in px
+    this._joyEl     = null;            // group element moved to finger
+    this._knobEl    = null;
 
-    // Look state
-    this._lookTouchId = null;
-    this._lookLast    = { x: 0, y: 0 };
-    this._lookSens    = 0.0022;
+    // Look
+    this._lookId     = null;
+    this._lookLast   = { x: 0, y: 0 };
+    this._lookStart  = { x: 0, y: 0 };
+    this._lookMoved  = 0;
+    this._lookStartT = 0;
+    this._lookSens   = 0.0024;
 
-    // Sprint is held via touch (toggle off when finger lifts)
-    this._sprintTouchId = null;
-
-    // DOM refs
-    this._knob      = null;
-    this._joyZone   = null;
-    this._btnInteract = null;
+    // Buttons
     this._btnFlash    = null;
-    this._btnSprint   = null;
+    this._btnInteract = null;
     this._btnPause    = null;
   }
 
-  // Call after player is created and DOM is ready
   init(player) {
     this.player = player;
-
-    // Detect touch capability
     const hasTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     if (!hasTouch) return;
 
@@ -45,220 +46,229 @@ class TouchControls {
     const tc = document.getElementById('touchControls');
     if (tc) tc.classList.remove('hidden');
 
-    this._knob       = document.getElementById('joystickKnob');
-    this._joyZone    = document.getElementById('joystickZone');
-    this._btnInteract = document.getElementById('btnInteract');
+    this._joyEl   = document.getElementById('joystickFloating');
+    this._knobEl  = document.getElementById('joystickKnob');
     this._btnFlash    = document.getElementById('btnFlash');
-    this._btnSprint   = document.getElementById('btnSprint');
+    this._btnInteract = document.getElementById('btnInteract');
     this._btnPause    = document.getElementById('btnPause');
 
     this._setupJoystick();
-    this._setupLookArea();
+    this._setupLook();
     this._setupButtons();
     this._setupMobileUI();
   }
 
-  // Inject joystick values into player movement each frame
-  // Called from game loop (or player.update)
   applyJoystick() {
     if (!this.active || !this.player) return;
-    // Expose delta so player._move() can read it
     this.player._touchMove = {
       x: this._joyDelta.x,
       y: this._joyDelta.y,
     };
+    // Auto-sprint when joystick pushed hard (≥ 70 %)
+    const mag = Math.sqrt(
+      this._joyDelta.x ** 2 + this._joyDelta.y ** 2
+    );
+    this.player.input.sprint = mag >= 0.70;
   }
 
-  // ── Joystick ─────────────────────────────────────────────────────
+  // ── Floating joystick ─────────────────────────────────────────────
 
   _setupJoystick() {
-    const zone = this._joyZone;
-    if (!zone) return;
+    // Joystick activates anywhere in left 48 % of screen
+    const inLeftZone = t =>
+      t.clientX < window.innerWidth * 0.48 &&
+      // don't steal touches from flashlight button
+      !t.target.closest('#btnFlash');
 
-    // Use a wide touch zone (entire bottom-left quadrant) so player
-    // doesn't have to hit the visual ring precisely
-    const getTouchInZone = (touch) => {
-      const rect = zone.getBoundingClientRect();
-      // Zone is generous: anywhere in bottom-left quarter
-      return touch.clientX < window.innerWidth * 0.45 &&
-             touch.clientY > window.innerHeight * 0.45;
-    };
-
-    const getCenter = () => {
-      const rect = zone.getBoundingClientRect();
-      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-    };
-
-    document.addEventListener('touchstart', (e) => {
+    document.addEventListener('touchstart', e => {
       for (const t of e.changedTouches) {
-        if (this._joyTouchId === null && getTouchInZone(t)) {
-          this._joyTouchId = t.identifier;
-          this._joyCenter  = getCenter();
-          this._updateKnob(0, 0);
+        if (this._joyId === null && inLeftZone(t)) {
+          this._joyId = t.identifier;
+          this._joyOrigin = { x: t.clientX, y: t.clientY };
+          this._showJoystick(t.clientX, t.clientY);
         }
       }
     }, { passive: true });
 
-    document.addEventListener('touchmove', (e) => {
+    document.addEventListener('touchmove', e => {
       for (const t of e.changedTouches) {
-        if (t.identifier !== this._joyTouchId) continue;
-        const dx = t.clientX - this._joyCenter.x;
-        const dy = t.clientY - this._joyCenter.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (t.identifier !== this._joyId) continue;
+        const dx = t.clientX - this._joyOrigin.x;
+        const dy = t.clientY - this._joyOrigin.y;
+        const dist = Math.hypot(dx, dy);
         const clamped = Math.min(dist, this._joyMaxR);
         const nx = dist > 0 ? (dx / dist) * clamped : 0;
         const ny = dist > 0 ? (dy / dist) * clamped : 0;
         this._joyDelta.x = nx / this._joyMaxR;
         this._joyDelta.y = ny / this._joyMaxR;
-        this._updateKnob(nx, ny);
+        this._moveKnob(nx, ny);
       }
     }, { passive: true });
 
-    document.addEventListener('touchend', (e) => {
+    document.addEventListener('touchend', e => {
       for (const t of e.changedTouches) {
-        if (t.identifier === this._joyTouchId) {
-          this._joyTouchId = null;
+        if (t.identifier === this._joyId) {
+          this._joyId = null;
           this._joyDelta.x = 0;
           this._joyDelta.y = 0;
-          this._updateKnob(0, 0);
+          this._hideJoystick();
+        }
+      }
+    }, { passive: true });
+
+    document.addEventListener('touchcancel', e => {
+      for (const t of e.changedTouches) {
+        if (t.identifier === this._joyId) {
+          this._joyId = null;
+          this._joyDelta.x = 0;
+          this._joyDelta.y = 0;
+          this._hideJoystick();
         }
       }
     }, { passive: true });
   }
 
-  _updateKnob(ox, oy) {
-    if (!this._knob) return;
-    this._knob.style.transform =
+  _showJoystick(cx, cy) {
+    if (!this._joyEl) return;
+    const R = this._joyMaxR + 10; // base radius slightly bigger than max travel
+    this._joyEl.style.left   = (cx - R) + 'px';
+    this._joyEl.style.top    = (cy - R) + 'px';
+    this._joyEl.style.width  = (R * 2) + 'px';
+    this._joyEl.style.height = (R * 2) + 'px';
+    this._joyEl.style.opacity = '1';
+    if (this._knobEl) {
+      this._knobEl.style.transform = 'translate(-50%, -50%)';
+    }
+  }
+
+  _hideJoystick() {
+    if (!this._joyEl) return;
+    this._joyEl.style.opacity = '0';
+    if (this._knobEl) this._knobEl.style.transform = 'translate(-50%, -50%)';
+  }
+
+  _moveKnob(ox, oy) {
+    if (!this._knobEl) return;
+    this._knobEl.style.transform =
       `translate(calc(-50% + ${ox}px), calc(-50% + ${oy}px))`;
   }
 
-  // ── Camera look (right 60% of screen, drag) ───────────────────
+  // ── Look drag + tap-to-interact ───────────────────────────────────
 
-  _setupLookArea() {
-    const isLookArea = (touch) => {
-      // Right portion of screen that's not a button
-      return touch.clientX > window.innerWidth * 0.45;
+  _setupLook() {
+    const inLookZone = t => {
+      // Right 52 % of screen, not on action buttons
+      return t.clientX >= window.innerWidth * 0.48 &&
+             !t.target.closest('#btnInteract') &&
+             !t.target.closest('#btnPause');
     };
 
-    document.addEventListener('touchstart', (e) => {
+    const TAP_DIST = 12;  // px – if movement < this → tap
+    const TAP_TIME = 260; // ms – if duration < this → tap
+
+    document.addEventListener('touchstart', e => {
       for (const t of e.changedTouches) {
-        if (this._lookTouchId === null && isLookArea(t)) {
-          // Don't steal touches from buttons (they handle stopPropagation)
-          this._lookTouchId = t.identifier;
-          this._lookLast = { x: t.clientX, y: t.clientY };
+        if (this._lookId === null && inLookZone(t)) {
+          this._lookId     = t.identifier;
+          this._lookLast   = { x: t.clientX, y: t.clientY };
+          this._lookStart  = { x: t.clientX, y: t.clientY };
+          this._lookMoved  = 0;
+          this._lookStartT = Date.now();
         }
       }
     }, { passive: true });
 
-    document.addEventListener('touchmove', (e) => {
+    document.addEventListener('touchmove', e => {
       for (const t of e.changedTouches) {
-        if (t.identifier !== this._lookTouchId || !this.player) continue;
+        if (t.identifier !== this._lookId || !this.player) continue;
         const dx = t.clientX - this._lookLast.x;
         const dy = t.clientY - this._lookLast.y;
+        this._lookMoved += Math.hypot(dx, dy);
         this.player.yaw   -= dx * this._lookSens;
         this.player.pitch -= dy * this._lookSens;
-        this.player.pitch = Math.max(-Math.PI * 0.45,
-                              Math.min(Math.PI * 0.45, this.player.pitch));
+        this.player.pitch = Math.max(-Math.PI * 0.44,
+                              Math.min(Math.PI * 0.44, this.player.pitch));
         this._lookLast = { x: t.clientX, y: t.clientY };
       }
     }, { passive: true });
 
-    document.addEventListener('touchend', (e) => {
+    document.addEventListener('touchend', e => {
       for (const t of e.changedTouches) {
-        if (t.identifier === this._lookTouchId) {
-          this._lookTouchId = null;
+        if (t.identifier !== this._lookId) continue;
+        this._lookId = null;
+        // Short tap with little movement → interact
+        const elapsed = Date.now() - this._lookStartT;
+        if (this._lookMoved < TAP_DIST && elapsed < TAP_TIME) {
+          if (this.player) this.player._pendingInteract = true;
+          this._flashInteractBtn();
         }
       }
     }, { passive: true });
   }
 
-  // ── Action buttons ────────────────────────────────────────────
+  _flashInteractBtn() {
+    if (!this._btnInteract) return;
+    this._btnInteract.classList.add('pressed');
+    setTimeout(() => this._btnInteract.classList.remove('pressed'), 180);
+  }
+
+  // ── Action buttons ────────────────────────────────────────────────
 
   _setupButtons() {
-    // Interact button – fires once per tap
-    this._setupBtn(this._btnInteract, {
-      onStart: () => {
-        if (this.player) this.player._pendingInteract = true;
-      }
+    // Interact (E) – dedicated button + right-side tap (handled above)
+    this._touchBtn(this._btnInteract, {
+      onStart: () => { if (this.player) this.player._pendingInteract = true; }
     });
 
-    // Flashlight – fires once per tap
-    this._setupBtn(this._btnFlash, {
-      onStart: () => {
-        if (this.player) this.player._pendingFlashlight = true;
-      }
+    // Flashlight (F) – toggle on tap
+    this._touchBtn(this._btnFlash, {
+      onStart: () => { if (this.player) this.player._pendingFlashlight = true; }
     });
 
-    // Sprint – held
-    this._setupBtn(this._btnSprint, {
-      onStart: () => { if (this.player) this.player.input.sprint = true; },
-      onEnd:   () => { if (this.player) this.player.input.sprint = false; }
-    });
-
-    // Pause (top right)
+    // Pause – top right
     if (this._btnPause) {
-      this._btnPause.addEventListener('touchstart', (e) => {
+      this._btnPause.addEventListener('touchstart', e => {
         e.stopPropagation();
         if (this.player) this.player.input.escape = true;
       }, { passive: true });
     }
   }
 
-  _setupBtn(el, { onStart, onEnd } = {}) {
+  _touchBtn(el, { onStart, onEnd } = {}) {
     if (!el) return;
-
-    el.addEventListener('touchstart', (e) => {
-      e.stopPropagation();  // prevent look area from stealing this touch
+    el.addEventListener('touchstart', e => {
+      e.stopPropagation();
       el.classList.add('pressed');
       if (onStart) onStart();
     }, { passive: true });
-
-    el.addEventListener('touchend', (e) => {
+    el.addEventListener('touchend', e => {
       e.stopPropagation();
       el.classList.remove('pressed');
       if (onEnd) onEnd();
     }, { passive: true });
-
     el.addEventListener('touchcancel', () => {
       el.classList.remove('pressed');
       if (onEnd) onEnd();
     }, { passive: true });
   }
 
-  // ── Mobile UI tweaks ──────────────────────────────────────────
+  // ── Mobile UI helpers ─────────────────────────────────────────────
 
   _setupMobileUI() {
-    // Close note by tapping the close button
-    const noteCloseBtn = document.getElementById('noteCloseBtn');
-    noteCloseBtn?.addEventListener('touchstart', (e) => {
-      e.stopPropagation();
-      document.getElementById('noteDisplay')?.classList.add('hidden');
-    }, { passive: true });
-    noteCloseBtn?.addEventListener('click', () => {
+    // Note close button
+    document.getElementById('noteCloseBtn')?.addEventListener('click', () => {
       document.getElementById('noteDisplay')?.classList.add('hidden');
     });
 
-    // Keypad close button
-    const kpClose = document.getElementById('keypadCloseBtn');
-    kpClose?.addEventListener('touchstart', (e) => {
-      e.stopPropagation();
-    }, { passive: true });
-    // click event is already wired in ui.js
-
-    // Prevent body scroll / zoom on touch
-    document.addEventListener('touchmove', (e) => {
-      if (e.target === document.getElementById('gameCanvas') ||
-          e.target === document.body) {
-        e.preventDefault();
-      }
+    // Prevent body pinch-zoom / scroll
+    document.addEventListener('touchmove', e => {
+      if (e.touches.length > 1) e.preventDefault();
     }, { passive: false });
   }
 
-  // Returns true if this is a touch device
   static isMobile() {
     return ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
   }
 }
 
-// Singleton accessible globally
 const touchControls = new TouchControls();

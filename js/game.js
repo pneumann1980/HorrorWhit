@@ -207,10 +207,11 @@ class Game {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.shadowMap.enabled = false;
-    this.renderer.setClearColor(0x05040a);
-    // Tone mapping prevents clipping – makes lit areas visible without washing out darks
-    this.renderer.toneMapping = THREE.ReinhardToneMapping;
-    this.renderer.toneMappingExposure = 1.4;
+    this.renderer.setClearColor(0x08060e);
+    // sRGB output: gamma-corrects linear light values → brighter midtones
+    this.renderer.outputEncoding = THREE.sRGBEncoding || 3001; // r134 constant
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.0;
   }
 
   _setupScene() {

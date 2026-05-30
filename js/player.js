@@ -137,7 +137,7 @@ class Player {
     // Merge keyboard and touch joystick input
     const joy = this._touchMove || { x: 0, y: 0 };
     let moveX = (this.input.right ? 1 : 0) - (this.input.left ? 1 : 0) + joy.x;
-    let moveZ = (this.input.back  ? 1 : 0) - (this.input.forward ? 1 : 0) + joy.y;
+    let moveZ = (this.input.back  ? 1 : 0) - (this.input.forward ? 1 : 0) - joy.y;
 
     // Normalise to unit vector (prevents faster diagonal movement)
     const rawLen = Math.sqrt(moveX * moveX + moveZ * moveZ);
