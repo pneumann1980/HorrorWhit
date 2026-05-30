@@ -71,7 +71,8 @@ class Player {
     });
 
     // Flashlight (SpotLight)
-    this._flashlight = new THREE.SpotLight(0xffd0a0, 1.8, 22, Math.PI / 6, 0.35, 1.8);
+    // Strong flashlight – main navigation tool in the dark
+    this._flashlight = new THREE.SpotLight(0xfff0d8, 3.5, 28, Math.PI / 6, 0.28, 1.6);
     this._flashlight.castShadow = false;
     this._flashlightTarget = new THREE.Object3D();
     this.scene.add(this._flashlightTarget);
@@ -201,7 +202,7 @@ class Player {
 
     // Flashlight intensity = battery level
     if (this._flashlight) {
-      this._flashlight.intensity = this.flashlightOn ? Math.max(0, 1.8 * this.battery) : 0;
+      this._flashlight.intensity = this.flashlightOn ? Math.max(0, 3.5 * this.battery) : 0;
     }
   }
 

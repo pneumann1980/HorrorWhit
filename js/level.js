@@ -82,23 +82,24 @@ class Level {
   _initMaterials() {
     const M = THREE.MeshLambertMaterial;
     this._mats = {
-      wallGrey:    new M({ color: 0x1a1a1a }),
-      wallLab:     new M({ color: 0x0e1118 }),
-      wallStorage: new M({ color: 0x14100c }),
-      wallSec:     new M({ color: 0x0a0a0e }),
-      wallTech:    new M({ color: 0x080c0a }),
-      floor:       new M({ color: 0x0d0d0d }),
-      floorLab:    new M({ color: 0x0a0c0e }),
-      ceiling:     new M({ color: 0x080808 }),
-      door:        new M({ color: 0x1a1008 }),
-      doorFrame:   new M({ color: 0x282010 }),
-      metal:       new M({ color: 0x151515 }),
-      crate:       new M({ color: 0x1a1208 }),
-      desk:        new M({ color: 0x181210 }),
-      screen:      new M({ color: 0x050508, emissive: 0x000510, emissiveIntensity: 0.3 }),
-      fusebox:     new M({ color: 0x202820 }),
-      fuseboxLit:  new M({ color: 0x204020, emissive: 0x004000, emissiveIntensity: 0.5 }),
-      exitDoor:    new M({ color: 0x1a2a1a }),
+      // Base walls: mid-gray so they actually reflect light
+      wallGrey:    new M({ color: 0x484848 }),
+      wallLab:     new M({ color: 0x3a3e48 }),   // cool blue-grey
+      wallStorage: new M({ color: 0x3e3428 }),   // warm brown-grey
+      wallSec:     new M({ color: 0x282830 }),   // dark cool grey
+      wallTech:    new M({ color: 0x28332e }),   // dark green-grey
+      floor:       new M({ color: 0x2c2c2c }),
+      floorLab:    new M({ color: 0x26282e }),
+      ceiling:     new M({ color: 0x181818 }),   // keep ceilings dark
+      door:        new M({ color: 0x302418 }),
+      doorFrame:   new M({ color: 0x403420 }),
+      metal:       new M({ color: 0x383838 }),
+      crate:       new M({ color: 0x3c3020 }),
+      desk:        new M({ color: 0x302820 }),
+      screen:      new M({ color: 0x080a10, emissive: 0x000820, emissiveIntensity: 0.5 }),
+      fusebox:     new M({ color: 0x303830 }),
+      fuseboxLit:  new M({ color: 0x204020, emissive: 0x005000, emissiveIntensity: 0.8 }),
+      exitDoor:    new M({ color: 0x283828 }),
     };
   }
 
@@ -240,38 +241,42 @@ class Level {
   // ── Lights ───────────────────────────────────────────────────────
 
   _buildLights() {
-    // Global very dim ambient
-    const ambient = new THREE.AmbientLight(0x050508, 1);
+    // Ambient: dark but gives just enough fill so walls aren't pure black
+    const ambient = new THREE.AmbientLight(0x1a1820, 1);
     this.scene.add(ambient);
 
-    // Start room: single flickering warm light
-    this._pointLight(0, 3.5, 0, 0xffa060, 0.5, 12, true, 0.8);
+    // Start room – warm yellowish ceiling lamp, flickering
+    this._pointLight(0,  3.5,  0,   0xffa860, 1.8, 18, true,  0.8);
 
-    // Corridor: two dim yellowish lights
-    this._pointLight(9, 3.5, 0, 0xffb040, 0.3, 8, true, 0.5);
-    this._pointLight(15, 3.5, 0, 0xffb040, 0.25, 7, false, 0);
+    // Corridor A – two overhead lamps
+    this._pointLight(9,  3.5,  0,   0xffb040, 1.2, 14, true,  0.5);
+    this._pointLight(15, 3.5,  0,   0xffb040, 1.0, 12, false, 0);
 
-    // Hub: flickering overhead
-    this._pointLight(24, 3.6, 0, 0xffd090, 0.5, 15, true, 1.2);
-    this._pointLight(22, 3.5, -4, 0xffa040, 0.2, 8, true, 0.6);
+    // Hub – main flickering overhead + fill
+    this._pointLight(24, 3.6,  0,   0xffd090, 1.8, 20, true,  1.2);
+    this._pointLight(22, 3.5, -4,   0xffb050, 0.8, 12, true,  0.6);
+    this._pointLight(26, 3.5,  4,   0xffb050, 0.6, 10, true,  0.4);
 
-    // Lab: cold fluorescent (slight blue, no flicker)
-    this._pointLight(24, 3.5, -13, 0xd0e0ff, 0.4, 12, false, 0);
-    this._pointLight(20, 3.5, -16, 0xd0e0ff, 0.25, 8, false, 0);
+    // Lab – cold fluorescent tubes (two lights for even coverage)
+    this._pointLight(21, 3.5, -13,  0xd0e8ff, 1.4, 16, false, 0);
+    this._pointLight(27, 3.5, -13,  0xd0e8ff, 1.2, 14, false, 0);
+    this._pointLight(24, 3.5, -16,  0xc8e0ff, 0.8, 10, false, 0);
 
-    // Storage: warm dim
-    this._pointLight(24, 3.5, 13, 0xffb060, 0.3, 10, true, 0.4);
+    // Storage – warm incandescent, slightly broken
+    this._pointLight(22, 3.5,  13,  0xffb060, 1.2, 16, true,  0.4);
+    this._pointLight(27, 3.5,  15,  0xffa040, 0.7, 10, true,  0.6);
 
-    // Security: emergency red
-    this._pointLight(36, 3.0, 0, 0xff1000, 0.35, 12, true, 1.5);
+    // Security room – emergency red rotating feel
+    this._pointLight(36, 3.0,  0,   0xff2000, 1.2, 16, true,  1.5);
+    this._pointLight(36, 2.0, -3,   0xcc1000, 0.5, 8,  false, 0);
 
-    // Tech corridor: green emergency
-    this._pointLight(47, 3.5, 0, 0x00ff40, 0.2, 8, false, 0);
+    // Tech corridor – green emergency strip light
+    this._pointLight(47, 3.5,  0,   0x40ff80, 0.9, 14, false, 0);
 
-    // Tech room: dim blue-green server glow
-    this._pointLight(55, 2.0, 0, 0x0040ff, 0.25, 10, false, 0);
-    this._pointLight(60, 2.0, 0, 0x004020, 0.3, 10, true, 0.3);
-    this._pointLight(63, 2.0, 0, 0x002040, 0.2, 8, false, 0);
+    // Tech room – server glow + ceiling panels
+    this._pointLight(55, 2.5,  0,   0x4080ff, 1.0, 14, false, 0);
+    this._pointLight(60, 2.5,  0,   0x20c040, 0.9, 12, true,  0.3);
+    this._pointLight(63, 2.5,  0,   0x2040a0, 0.8, 12, false, 0);
   }
 
   _pointLight(x, y, z, color, intensity, dist, flicker, rate) {

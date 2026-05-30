@@ -207,12 +207,16 @@ class Game {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.shadowMap.enabled = false;
-    this.renderer.setClearColor(0x000000);
+    this.renderer.setClearColor(0x05040a);
+    // Tone mapping prevents clipping – makes lit areas visible without washing out darks
+    this.renderer.toneMapping = THREE.ReinhardToneMapping;
+    this.renderer.toneMappingExposure = 1.4;
   }
 
   _setupScene() {
     this.scene = new THREE.Scene();
-    this.scene.fog = new THREE.FogExp2(0x000000, 0.055);
+    // Fog: thin enough to see room shapes, thick enough to hide the corridor ahead
+    this.scene.fog = new THREE.FogExp2(0x05040a, 0.022);
     this.camera = new THREE.PerspectiveCamera(
       72, window.innerWidth / window.innerHeight, 0.1, 80
     );
