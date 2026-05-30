@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Echoes Below</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Creepster&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- 3D Canvas -->
+<canvas id="gameCanvas"></canvas>
+
+<!-- Visual overlays -->
+<div id="vignette"></div>
+<div id="bloodOverlay"></div>
+<div id="scanlines"></div>
+<div id="static"></div>
+
+<!-- ── HUD ── -->
+<div id="hud" class="hidden">
+
+  <!-- Objective top-center -->
+  <div id="objective">Finde einen Weg aus der Anlage</div>
+
+  <!-- Crosshair -->
+  <div id="crosshair">·</div>
+
+  <!-- Interact hint (below crosshair) -->
+  <div id="interactHint" class="hidden">[E] Interagieren</div>
+
+  <!-- Battery bottom-right -->
+  <div id="batteryContainer">
+    <div id="batteryIcon">⚡</div>
+    <div id="batteryBar"><div id="batteryFill" style="width:100%"></div></div>
+  </div>
+  <div id="flashlightOff">LICHT AUS</div>
+
+  <!-- Inventory bottom-center -->
+  <div id="inventoryBar"></div>
+
+  <!-- Toast notification -->
+  <div id="notification" class="hidden"></div>
+
+  <!-- Note / document reader -->
+  <div id="noteDisplay" class="hidden">
+    <div id="noteContent"></div>
+    <div id="noteClose">[E] Schließen</div>
+  </div>
+
+</div>
+
+<!-- ── Keypad Overlay ── -->
+<div id="keypadOverlay" class="hidden screen">
+  <div id="keypadBox">
+    <div id="keypadTitle">ZUGANGSCODE</div>
+    <div id="keypadDisplay">____</div>
+    <div class="keypad-grid" id="keypadGrid">
+      <!-- Buttons injected by ui.js -->
+    </div>
+    <div id="keypadClose">[ESC] Abbrechen</div>
+    <button id="keypadCloseBtn" style="display:none"></button>
+  </div>
+</div>
+
+<!-- ── Main Menu ── -->
+<div id="mainMenu" class="screen hidden">
+  <div class="menu-box">
+    <h1 class="game-title">ECHOES<br>BELOW</h1>
+    <p class="game-subtitle">Etwas hört zu.</p>
+    <button id="startBtn" class="menu-btn">NEUES SPIEL</button>
+    <button id="controlsBtn" class="menu-btn secondary">STEUERUNG</button>
+  </div>
+</div>
+
+<!-- ── Controls Screen ── -->
+<div id="controlsScreen" class="screen hidden">
+  <div class="menu-box">
+    <h2>STEUERUNG</h2>
+    <div class="controls-grid">
+      <div class="ctrl-row"><span>W A S D</span><span>Bewegen</span></div>
+      <div class="ctrl-row"><span>Maus</span><span>Umsehen</span></div>
+      <div class="ctrl-row"><span>Shift</span><span>Rennen</span></div>
+      <div class="ctrl-row"><span>E</span><span>Interagieren / Lesen</span></div>
+      <div class="ctrl-row"><span>F</span><span>Taschenlampe</span></div>
+      <div class="ctrl-row"><span>ESC</span><span>Pause</span></div>
+    </div>
+    <br>
+    <p style="font-size:12px;color:#555;margin-bottom:20px">
+      Erkunde die Anlage · Sammle Hinweise · Finde die Sicherung<br>
+      Installiere sie im Technikraum · Gib den Code am Ausgang ein
+    </p>
+    <button id="backBtn" class="menu-btn secondary">ZURÜCK</button>
+  </div>
+</div>
+
+<!-- ── Pause Menu ── -->
+<div id="pauseMenu" class="screen hidden">
+  <div class="menu-box">
+    <h2>PAUSE</h2>
+    <button id="resumeBtn" class="menu-btn">WEITER</button>
+    <button id="mainMenuBtn" class="menu-btn secondary">HAUPTMENÜ</button>
+  </div>
+</div>
+
+<!-- ── Game Over ── -->
+<div id="gameOverScreen" class="screen hidden">
+  <div class="menu-box">
+    <h2>ES HAT DICH GEFUNDEN</h2>
+    <p>Die Dunkelheit hat wieder eine Seele verschluckt.<br>
+       War es das wert, zu rennen?</p>
+    <button id="retryBtn" class="menu-btn">NOCHMAL VERSUCHEN</button>
+    <button id="goMenuBtn" class="menu-btn secondary">HAUPTMENÜ</button>
+  </div>
+</div>
+
+<!-- ── Win Screen ── -->
+<div id="winScreen" class="screen hidden">
+  <div class="menu-box">
+    <h2 class="win-title">DU BIST ENTKOMMEN</h2>
+    <p>Du hast es durch den Ausgang geschafft.<br>
+       Aber hat es dich wirklich gehen lassen?</p>
+    <button id="winMenuBtn" class="menu-btn">HAUPTMENÜ</button>
+  </div>
+</div>
+
+<!-- ── Loading Screen ── -->
+<div id="loadingScreen">
+  <h2>WIRD GELADEN …</h2>
+  <div id="loadingBar"><div id="loadingFill"></div></div>
+</div>
+
+<!-- Three.js r134 from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+
+<!-- Game modules (order matters) -->
+<script src="js/audio.js"></script>
+<script src="js/effects.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/level.js"></script>
+<script src="js/items.js"></script>
+<script src="js/enemy.js"></script>
+<script src="js/player.js"></script>
+<script src="js/game.js"></script>
+
+</body>
+</html>
