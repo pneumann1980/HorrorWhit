@@ -45,6 +45,12 @@ class Game {
     // Wire up win callback
     this.items.onWin = () => this._win();
 
+    // Touch controls (no-op on desktop)
+    touchControls.init(this.player);
+
+    // Mobile detection (used to skip pointer lock)
+    this._isMobile = TouchControls.isMobile();
+
     // Events
     window.addEventListener('resize', () => this._onResize());
     this._bindMenuButtons();
@@ -64,10 +70,21 @@ class Game {
     ids.forEach(id => document.getElementById(id)?.classList.add('hidden'));
 
     if (s === STATE.MENU)     { document.getElementById('mainMenu').classList.remove('hidden'); }
-    if (s === STATE.PLAYING)  { document.getElementById('hud').classList.remove('hidden'); }
+    if (s === STATE.PLAYING) {
+      document.getElementById('hud').classList.remove('hidden');
+      // Show touch controls if on touch device (touchControls.init already added class)
+      if (this._isMobile) {
+        document.getElementById('touchControls')?.classList.remove('hidden');
+      }
+    }
     if (s === STATE.PAUSED) {
       document.getElementById('hud').classList.remove('hidden');
       document.getElementById('pauseMenu').classList.remove('hidden');
+      // Hide touch controls while paused (menu handles resume)
+      document.getElementById('touchControls')?.classList.add('hidden');
+    }
+    if (s === STATE.MENU || s === STATE.GAMEOVER || s === STATE.WIN) {
+      document.getElementById('touchControls')?.classList.add('hidden');
     }
     if (s === STATE.GAMEOVER) { document.getElementById('gameOverScreen').classList.remove('hidden'); }
     if (s === STATE.WIN)      { document.getElementById('winScreen').classList.remove('hidden'); }
@@ -78,7 +95,9 @@ class Game {
     this.audio.resume();
     this._resetGame();
     this.setState(STATE.PLAYING);
-    document.getElementById('gameCanvas').requestPointerLock();
+    if (!this._isMobile) {
+      document.getElementById('gameCanvas').requestPointerLock?.();
+    }
     this.audio.startAmbient();
   }
 
@@ -98,7 +117,9 @@ class Game {
 
   _resume() {
     this.setState(STATE.PLAYING);
-    document.getElementById('gameCanvas').requestPointerLock();
+    if (!this._isMobile) {
+      document.getElementById('gameCanvas').requestPointerLock?.();
+    }
   }
 
   _goMenu() {
@@ -148,6 +169,8 @@ class Game {
       }
     }
 
+    // Push joystick values into player before movement is processed
+    touchControls.applyJoystick();
     this.player.update(delta, this.state);
 
     const playerPos = this.player.getPosition();

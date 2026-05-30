@@ -479,3 +479,229 @@ body {
 }
 
 .shaking { animation: shake 0.15s infinite; }
+
+/* ═══════════════════════════════════════════════════════════
+   TOUCH CONTROLS
+   ═══════════════════════════════════════════════════════════ */
+
+/* Disable default tap highlight globally for touch */
+* { -webkit-tap-highlight-color: transparent; }
+
+/* Touch controls container: covers full screen, pointer-events:none
+   so the canvas below still gets look-touch events */
+#touchControls {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 25;
+  /* Landscape hint via orientation media */
+}
+
+/* ── Virtual Joystick ──────────────────────────────────────── */
+
+#joystickZone {
+  position: absolute;
+  bottom: 28px;
+  left: 24px;
+  width: 140px;
+  height: 140px;
+  pointer-events: all;
+  touch-action: none;
+}
+
+#joystickBase {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(2px);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+}
+
+#joystickKnob {
+  position: absolute;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%,
+    rgba(255,255,255,0.35),
+    rgba(255,255,255,0.12));
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition: transform 0.04s ease-out;
+}
+
+/* ── Action Buttons (bottom right) ────────────────────────── */
+
+#actionButtons {
+  position: absolute;
+  bottom: 24px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: all;
+  touch-action: none;
+}
+
+#actionRow1 {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Base touch button style */
+.touch-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  color: rgba(255, 255, 255, 0.75);
+  font-family: 'Share Tech Mono', monospace;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  transition: background 0.12s, border-color 0.12s, transform 0.08s;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  -webkit-user-select: none;
+}
+
+/* Flashlight button */
+#btnFlash {
+  width: 54px;
+  height: 54px;
+  font-size: 22px;
+  border-color: rgba(240, 192, 64, 0.35);
+}
+
+/* Sprint button */
+.sprint-btn {
+  width: 54px;
+  height: 54px;
+  font-size: 24px;
+  border-color: rgba(100, 180, 255, 0.35);
+  color: rgba(140, 200, 255, 0.8);
+}
+
+/* Interact button (primary, large) */
+.interact-btn {
+  width: 78px;
+  height: 78px;
+  font-size: 32px;
+  font-weight: bold;
+  border-color: rgba(200, 48, 48, 0.55);
+  background: rgba(60, 0, 0, 0.65);
+  color: rgba(255, 140, 140, 0.9);
+  box-shadow: 0 0 16px rgba(200, 48, 48, 0.25), 0 2px 12px rgba(0,0,0,0.6);
+}
+
+/* Active / pressed states */
+.touch-btn:active,
+.touch-btn.pressed {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.65);
+  transform: scale(0.92);
+}
+
+.interact-btn:active,
+.interact-btn.pressed {
+  background: rgba(160, 20, 20, 0.7);
+  border-color: rgba(255, 80, 80, 0.8);
+  transform: scale(0.92);
+}
+
+.sprint-btn.pressed {
+  background: rgba(20, 60, 120, 0.6);
+  border-color: rgba(100, 180, 255, 0.8);
+  transform: scale(0.96);
+}
+
+/* ── Pause button (top right) ─────────────────────────────── */
+
+.touch-pause-btn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(0,0,0,0.5);
+  color: rgba(255,255,255,0.5);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 16px;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: all;
+  touch-action: manipulation;
+  backdrop-filter: blur(4px);
+}
+
+.touch-pause-btn:active { background: rgba(255,255,255,0.15); }
+
+/* ── Shared close button style (note, keypad) ─────────────── */
+
+.touch-close-btn {
+  display: none;  /* shown on touch devices via JS class on <body> */
+  width: 100%;
+  max-width: 260px;
+  margin: 10px auto 0;
+  padding: 12px;
+  background: rgba(60,0,0,0.5);
+  border: 1px solid rgba(200,48,48,0.5);
+  border-radius: 4px;
+  color: #c8c8c8;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+body.touch-device .touch-close-btn { display: block; }
+body.touch-device #keypadCloseBtn  { display: block !important; }
+body.touch-device #noteClose       { display: none; }
+
+/* Battery shifts left on mobile so it doesn't overlap buttons */
+@media (max-width: 600px) {
+  #batteryContainer {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 20px;
+  }
+  #flashlightOff {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 36px;
+  }
+  #inventoryBar { display: none; }
+  #objective    { font-size: 10px; letter-spacing: 1px; top: 14px; }
+}
+
+/* Landscape orientation hint for very small screens */
+@media (max-height: 400px) and (orientation: portrait) {
+  #touchControls::before {
+    content: "Bitte Gerät drehen ↻";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    color: rgba(255,255,255,0.6);
+    pointer-events: none;
+  }
+}

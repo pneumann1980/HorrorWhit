@@ -133,14 +133,21 @@ class Player {
   }
 
   _move(delta) {
-    const running = this.input.sprint && (this.input.forward || this.input.back || this.input.left || this.input.right);
+    // Merge keyboard and touch joystick input
+    const joy = this._touchMove || { x: 0, y: 0 };
+    let moveX = (this.input.right ? 1 : 0) - (this.input.left ? 1 : 0) + joy.x;
+    let moveZ = (this.input.back  ? 1 : 0) - (this.input.forward ? 1 : 0) + joy.y;
+
+    // Normalise to unit vector (prevents faster diagonal movement)
+    const rawLen = Math.sqrt(moveX * moveX + moveZ * moveZ);
+    if (rawLen > 1) { moveX /= rawLen; moveZ /= rawLen; }
+
+    const isMoving = rawLen > 0.05;
+    const running = this.input.sprint && isMoving;
     const speed = running ? this.SPRINT_SPEED : this.WALK_SPEED;
 
-    const moveX = (this.input.right ? 1 : 0) - (this.input.left ? 1 : 0);
-    const moveZ = (this.input.back  ? 1 : 0) - (this.input.forward ? 1 : 0);
-
-    if (moveX === 0 && moveZ === 0) {
-      // Reset bob
+    if (!isMoving) {
+      // Smoothly dampen bob when idle
       this._bobPhase += (0 - this._bobPhase) * delta * 5;
       return;
     }

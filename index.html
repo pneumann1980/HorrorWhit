@@ -2,7 +2,9 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <title>Echoes Below</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Creepster&display=swap" rel="stylesheet">
@@ -48,6 +50,33 @@
   <div id="noteDisplay" class="hidden">
     <div id="noteContent"></div>
     <div id="noteClose">[E] Schließen</div>
+    <button id="noteCloseBtn" class="touch-close-btn">✕ Schließen</button>
+  </div>
+
+  <!-- ── Touch Controls (shown only on touch devices) ── -->
+  <div id="touchControls" class="hidden">
+
+    <!-- Virtual Joystick (bottom left) -->
+    <div id="joystickZone">
+      <div id="joystickBase">
+        <div id="joystickKnob"></div>
+      </div>
+    </div>
+
+    <!-- Action Buttons (bottom right) -->
+    <div id="actionButtons">
+      <!-- Top row: secondary actions -->
+      <div id="actionRow1">
+        <button id="btnFlash"  class="touch-btn" aria-label="Taschenlampe">⚡</button>
+        <button id="btnSprint" class="touch-btn sprint-btn" aria-label="Rennen">⇡</button>
+      </div>
+      <!-- Bottom: primary interact -->
+      <button id="btnInteract" class="touch-btn interact-btn" aria-label="Interagieren">E</button>
+    </div>
+
+    <!-- Pause button (top right) -->
+    <button id="btnPause" class="touch-pause-btn" aria-label="Pause">II</button>
+
   </div>
 
 </div>
@@ -61,7 +90,7 @@
       <!-- Buttons injected by ui.js -->
     </div>
     <div id="keypadClose">[ESC] Abbrechen</div>
-    <button id="keypadCloseBtn" style="display:none"></button>
+    <button id="keypadCloseBtn" class="touch-close-btn" style="display:none">✕ Abbrechen</button>
   </div>
 </div>
 
@@ -86,6 +115,15 @@
       <div class="ctrl-row"><span>E</span><span>Interagieren / Lesen</span></div>
       <div class="ctrl-row"><span>F</span><span>Taschenlampe</span></div>
       <div class="ctrl-row"><span>ESC</span><span>Pause</span></div>
+    </div>
+    <div class="controls-grid" style="margin-top:20px;border-top:1px solid #222;padding-top:16px">
+      <div class="ctrl-row" style="color:#a08040;font-size:10px;letter-spacing:2px">TOUCH (MOBILE)</div>
+      <div class="ctrl-row"><span>Joystick links</span><span>Bewegen</span></div>
+      <div class="ctrl-row"><span>Wischen rechts</span><span>Umsehen</span></div>
+      <div class="ctrl-row"><span>⇡ Taste</span><span>Rennen (halten)</span></div>
+      <div class="ctrl-row"><span>E Taste</span><span>Interagieren</span></div>
+      <div class="ctrl-row"><span>⚡ Taste</span><span>Taschenlampe</span></div>
+      <div class="ctrl-row"><span>II (oben rechts)</span><span>Pause</span></div>
     </div>
     <br>
     <p style="font-size:12px;color:#555;margin-bottom:20px">
@@ -143,6 +181,7 @@
 <script src="js/items.js"></script>
 <script src="js/enemy.js"></script>
 <script src="js/player.js"></script>
+<script src="js/touch.js"></script>
 <script src="js/game.js"></script>
 
 </body>
